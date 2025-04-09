@@ -1,0 +1,169 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Contact Book</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #87CEFA, #B0E0E6); /* Sky Blue Theme */
+            text-align: center;
+            margin: 0;
+            padding: 0;
+        }
+        h2 {
+            font-size: 32px;
+            margin-top: 20px;
+            color: white;
+        }
+        .container {
+            width: 50%;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+        }
+        input {
+            padding: 10px;
+            width: 80%;
+            border: 2px solid #4682B4;
+            border-radius: 6px;
+            font-size: 18px;
+            outline: none;
+            margin: 10px 0;
+            transition: box-shadow 0.3s ease-in-out;
+        }
+        input:hover, input:focus {
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
+        }
+        button {
+            padding: 12px;
+            background: #4682B4;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            border-radius: 6px;
+            margin-top: 10px;
+            transition: 0.3s;
+        }
+        button:hover {
+            background: #1E90FF;
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
+        }
+        .contact-list {
+            margin-top: 20px;
+            text-align: left;
+        }
+        .contact-item {
+            background: #f8f8f8;
+            padding: 10px;
+            border-radius: 6px;
+            margin: 10px 0;
+            box-shadow: 0 0 5px rgba(0, 0, 0, 0.1);
+            transition: box-shadow 0.3s ease-in-out;
+        }
+        .contact-item:hover {
+            box-shadow: 0 0 15px rgba(0, 191, 255, 0.8);
+        }
+        .delete-btn, .edit-btn {
+            background: red;
+            border: none;
+            color: white;
+            padding: 5px;
+            cursor: pointer;
+            border-radius: 4px;
+            margin-left: 10px;
+        }
+        .edit-btn {
+            background: green;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>📖 Contact Book</h2>
+    <div class="container">
+        <input type="text" id="name" placeholder="Name">
+        <input type="text" id="phone" placeholder="Phone">
+        <input type="email" id="email" placeholder="Email">
+        <input type="text" id="address" placeholder="Address">
+        <button onclick="addContact()">Add Contact</button>
+        <br><br>
+        <input type="text" id="search" placeholder="Search by Name or Phone" onkeyup="searchContact()">
+        <div class="contact-list" id="contactList"></div>
+    </div>
+
+    <script>
+        function fetchContacts() {
+            fetch('/contacts')
+                .then(response => response.json())
+                .then(data => {
+                    let contactList = document.getElementById("contactList");
+                    contactList.innerHTML = "";
+                    data.forEach((contact, index) => {
+                        contactList.innerHTML += `
+                            <div class="contact-item">
+                                <b>${contact.name}</b> - ${contact.phone} <br>
+                                ${contact.email} <br>
+                                ${contact.address} 
+                                <button class="edit-btn" onclick="editContact(${index})">Edit</button>
+                                <button class="delete-btn" onclick="deleteContact(${index})">Delete</button>
+                            </div>
+                        `;
+                    });
+                });
+        }
+
+        function addContact() {
+            const name = document.getElementById("name").value;
+            const phone = document.getElementById("phone").value;
+            const email = document.getElementById("email").value;
+            const address = document.getElementById("address").value;
+
+            fetch('/add', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name, phone, email, address })
+            }).then(() => fetchContacts());
+        }
+
+        function deleteContact(index) {
+            fetch(`/delete/${index}`, { method: "DELETE" })
+                .then(() => fetchContacts());
+        }
+
+        function editContact(index) {
+            const newName = prompt("Enter new name:");
+            const newPhone = prompt("Enter new phone:");
+            const newEmail = prompt("Enter new email:");
+            const newAddress = prompt("Enter new address:");
+
+            fetch(`/update/${index}`, {
+                method: "PUT",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ name: newName, phone: newPhone, email: newEmail, address: newAddress })
+            }).then(() => fetchContacts());
+        }
+
+        function searchContact() {
+            const query = document.getElementById("search").value.toLowerCase();
+            const contacts = document.querySelectorAll(".contact-item");
+
+            contacts.forEach(contact => {
+                if (contact.innerText.toLowerCase().includes(query)) {
+                    contact.style.display = "block";
+                } else {
+                    contact.style.display = "none";
+                }
+            });
+        }
+
+        fetchContacts();
+    </script>
+
+</body>
+</html>
