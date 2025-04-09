@@ -1,0 +1,157 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>To-Do List</title>
+    <style>
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(to right, #87CEFA, #B0E0E6); /* Sky Blue Theme */
+            text-align: center;
+            color: #333;
+            margin: 0;
+            padding: 0;
+        }
+        h2 {
+            font-size: 32px;
+            margin-top: 20px;
+            color: white;
+        }
+        .container {
+            width: 50%;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 12px;
+            box-shadow: 0px 0px 10px rgba(0, 0, 0, 0.2);
+            margin-top: 20px;
+        }
+        input {
+            padding: 10px;
+            width: 60%;
+            border: 2px solid #4682B4;
+            border-radius: 6px;
+            font-size: 16px;
+            outline: none;
+            margin-bottom: 10px;
+            transition: box-shadow 0.3s ease-in-out;
+        }
+        input:hover, input:focus {
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
+        }
+        button {
+            padding: 12px;
+            background: #4682B4;
+            color: white;
+            border: none;
+            cursor: pointer;
+            font-size: 16px;
+            border-radius: 6px;
+        }
+        button:hover {
+            background: #1E90FF;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            padding: 12px;
+            background: #f4f4f4;
+            margin: 5px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-radius: 6px;
+            font-size: 18px;
+            transition: box-shadow 0.3s ease-in-out;
+        }
+        li:hover {
+            box-shadow: 0 0 10px rgba(0, 191, 255, 0.8);
+        }
+        .completed {
+            text-decoration: line-through;
+            color: gray;
+        }
+        .actions {
+            display: flex;
+            gap: 10px;
+        }
+        .delete-btn {
+            background: red;
+            color: white;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+        .complete-btn {
+            background: green;
+            color: white;
+            padding: 6px 10px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        }
+    </style>
+</head>
+<body>
+
+    <h2>📋 To-Do List</h2>
+    <div class="container">
+        <input type="text" id="taskInput" placeholder="Enter a task...">
+        <button onclick="addTask()">Add Task</button>
+        <ul id="taskList"></ul>
+    </div>
+
+    <script>
+        function fetchTasks() {
+            fetch('/tasks')
+                .then(response => response.json())
+                .then(tasks => {
+                    const taskList = document.getElementById("taskList");
+                    taskList.innerHTML = "";
+                    tasks.forEach(task => {
+                        let li = document.createElement("li");
+                        li.innerHTML = `
+                            <span class="${task.completed ? 'completed' : ''}" onclick="toggleTask('${task.id}')">
+                                ${task.task} 
+                            </span>
+                            <div class="actions">
+                                <button class="complete-btn" onclick="toggleTask('${task.id}')">✔</button>
+                                <button class="delete-btn" onclick="deleteTask('${task.id}')">✖️</button>
+                            </div>
+                        `;
+                        taskList.appendChild(li);
+                    });
+                });
+        }
+
+        function addTask() {
+            const taskInput = document.getElementById("taskInput").value;
+            if (taskInput.trim() === "") return alert("Task cannot be empty!");
+
+            fetch('/add', {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ task: taskInput })
+            }).then(() => {
+                fetchTasks();
+                document.getElementById("taskInput").value = "";
+            });
+        }
+
+        function deleteTask(id) {
+            fetch(`/delete/${id}`, { method: "DELETE" }).then(() => fetchTasks());
+        }
+
+        function toggleTask(id) {
+            fetch(`/toggle/${id}`, { method: "PUT" }).then(() => fetchTasks());
+        }
+
+        fetchTasks();
+    </script>
+
+</body>
+</html>
